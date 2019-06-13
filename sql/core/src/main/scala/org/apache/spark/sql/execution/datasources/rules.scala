@@ -43,8 +43,12 @@ class ResolveSQLOnFile(sparkSession: SparkSession) extends Rule[LogicalPlan] {
   def apply(plan: LogicalPlan): LogicalPlan = plan resolveOperators {
     case u: UnresolvedRelation if maybeSQLFile(u) =>
       try {
+        val options: Map[String, String] = if (u.multipartIdentifier.head == "csv") {
+          Map("header" -> "true")
+        } else Map.empty
         val dataSource = DataSource(
           sparkSession,
+          options = options,
           paths = u.multipartIdentifier.last :: Nil,
           className = u.multipartIdentifier.head)
 
